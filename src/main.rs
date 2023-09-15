@@ -21,6 +21,6 @@ fn main() -> io::Result<()> {
     world.push(Box::new(Sphere::new(Array3::new([0.0, -100.5, -1.0]), 100.0)));
 
     // render
-    let cam = Camera::new(16.0/9.0, 400);
+    let cam = Camera::new(16.0/9.0, 400, 100);
     cam.render(&world)
 }

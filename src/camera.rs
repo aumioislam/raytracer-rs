@@ -5,6 +5,8 @@ use crate::ray::*;
 use crate::interval::*;
 use crate::util::*;
 
+pub type Pixel = Array3;
+
 pub struct Camera {
     aspect_ratio: f64,
     img_width: i32,
@@ -13,10 +15,11 @@ pub struct Camera {
     pix00_loc: Array3, 
     delta_u: Array3,
     delta_v: Array3,
+    samples: i32,
 }
 
 impl Camera {
-    pub fn new(aspect_ratio: f64, img_width: i32) -> Camera {
+    pub fn new(aspect_ratio: f64, img_width: i32, samples: i32) -> Camera {
         let img_height = (img_width as f64 / aspect_ratio).floor() as i32;
         let img_height = if img_height < 1 { 1 } else { img_height };
 
@@ -45,18 +48,7 @@ impl Camera {
             pix00_loc, 
             delta_u,
             delta_v,
-        }
-    }
-
-    fn ray_color(r: &Ray, world: &Vec<Box<dyn Hittable>>) -> Pixel {
-        let record = hit_world(world, r, Interval::new(0.0, f64::INFINITY));
-
-        if let Some(hit) = record {
-            0.5*(hit.normal + Pixel::new([1.0, 1.0, 1.0]))
-        } else {
-            let unit_vec = r.direction.unit();
-            let a = 0.5*(unit_vec[1] + 1.0);
-            (1.0-a)*Pixel::new([1.0, 1.0, 1.0]) + a*Pixel::new([0.5, 0.7, 1.0])
+            samples,
         }
     }
 
@@ -70,12 +62,13 @@ impl Camera {
             write!(&mut cerr, "Scanlines remaining: {}\n", self.img_height-j)?;
             cerr.flush()?;
             for i in 0..self.img_width {
-                let pixel_loc = self.pix00_loc + (self.delta_u * i as f64) + (self.delta_v * j as f64);
-                let ray_dir = pixel_loc - self.cam;
-                let r = Ray::new(self.cam, ray_dir);
-                let pix = Self::ray_color(&r, &world);
+                let mut pix = Array3::zero();
+                for _ in 0..self.samples {
+                    let r = self.get_ray(i, j);
+                    pix = pix + self.ray_color(&r, world);
+                }
 
-                write_pixel(&mut cout, pix)?;
+                write_pixel(&mut cout, pix, self.samples)?;
             }
         }
 
@@ -83,4 +76,32 @@ impl Camera {
         cerr.flush()?;
         Ok(())
     }
+
+    fn ray_color(&self, r: &Ray, world: &Vec<Box<dyn Hittable>>) -> Pixel {
+        let record = hit_world(world, r, Interval::new(0.0, f64::INFINITY));
+
+        if let Some(hit) = record {
+            0.5*(hit.normal + Pixel::new([1.0, 1.0, 1.0]))
+        } else {
+            let unit_vec = r.direction.unit();
+            let a = 0.5*(unit_vec[1] + 1.0);
+            (1.0-a)*Pixel::new([1.0, 1.0, 1.0]) + a*Pixel::new([0.5, 0.7, 1.0])
+        }
+    }
+
+    fn get_ray(&self, i: i32, j: i32) -> Ray {
+        let pixel_center = self.pix00_loc + (self.delta_u * i as f64) + (self.delta_v * j as f64);
+        let pixel_sample = pixel_center + self.pixel_sample_square();
+        
+        let ray_dir = pixel_sample - self.cam;
+        Ray { origin: self.cam, direction: ray_dir }
+    }
+
+    fn pixel_sample_square(&self) -> Array3 {
+        let pu = -0.5 + random_f64();
+        let pv = -0.5 + random_f64();
+
+        self.delta_u * pu + self.delta_v * pv
+    }
+
 }
