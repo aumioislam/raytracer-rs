@@ -11,8 +11,24 @@ pub fn write_pixel(os: &mut StdoutLock, pix: Pixel) -> io::Result<()> {
     Ok(())
 }
 
+pub fn hit_sphere(center: &Array3, radius: f64, r: &Ray) -> bool {
+    let along_centers = r.origin - *center;
+    
+    let a = r.direction.square();
+    let b = 2.0 * r.direction.dot(&along_centers);
+    let c = along_centers.square() - radius*radius;
+
+    let discrim = b*b - 4.0*a*c;
+
+    discrim >= 0.0
+}
+
 pub fn ray_color(r: &Ray) -> Pixel {
-    let unit_vec = r.direction.unit();
-    let a = 0.5*(unit_vec[1] + 1.0);
-    (1.0-a)*Pixel::new([1.0, 1.0, 1.0]) + a*Pixel::new([0.5, 0.7, 1.0])
+    if hit_sphere(&Array3::new([0.0, 0.0, -1.0]), 0.5, r) {
+        Pixel::new([1.0, 0.0, 0.0])
+    } else {
+        let unit_vec = r.direction.unit();
+        let a = 0.5*(unit_vec[1] + 1.0);
+        (1.0-a)*Pixel::new([1.0, 1.0, 1.0]) + a*Pixel::new([0.5, 0.7, 1.0])
+    }
 }
