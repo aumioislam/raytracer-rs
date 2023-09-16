@@ -17,6 +17,9 @@ pub struct Camera {
     delta_v: Array3,
     samples: i32,
     max_depth: i32,
+    defocus_angle: f64,
+    defocus_disk_u: Array3,
+    defocus_disk_v: Array3,
 }
 
 impl Camera {
@@ -29,15 +32,16 @@ impl Camera {
             lookfrom: Array3,
             lookat: Array3,
             vup: Array3,
+            defocus_angle: f64, 
+            focus_dist: f64,
         ) -> Camera {
         let img_height = (img_width as f64 / aspect_ratio).floor() as i32;
         let img_height = if img_height < 1 { 1 } else { img_height };
 
         //camera
-        let focal_length = (lookfrom - lookat).norm();
         let theta = degrees_to_rad(vfov);
         let h = (theta/2.0).tan();
-        let viewport_height = 2.0 * h * focal_length;
+        let viewport_height = 2.0 * h * focus_dist;
         let viewport_width = viewport_height * (img_width as f64 / img_height as f64);
         let cam = lookfrom;
 
@@ -54,8 +58,13 @@ impl Camera {
         let delta_u = vp_u / img_width as f64;
         let delta_v = vp_v / img_height as f64;
         
-        let viewport_upper_left = cam - (focal_length * w) - vp_u/2.0 - vp_v/2.0;
+        let viewport_upper_left = cam - (focus_dist * w) - vp_u/2.0 - vp_v/2.0;
         let pix00_loc = viewport_upper_left + 0.5*(delta_u + delta_v);
+
+        //camera defocus basis vectors
+        let defocus_radius = focus_dist * degrees_to_rad(defocus_angle/2.0).tan();
+        let defocus_disk_u = u * defocus_radius;
+        let defocus_disk_v = v * defocus_radius;
 
         Camera { 
             img_width,
@@ -66,6 +75,9 @@ impl Camera {
             delta_v,
             samples,
             max_depth,
+            defocus_angle,
+            defocus_disk_u,
+            defocus_disk_v,
         }
     }
 
@@ -120,8 +132,9 @@ impl Camera {
         let pixel_center = self.pix00_loc + (self.delta_u * i as f64) + (self.delta_v * j as f64);
         let pixel_sample = pixel_center + self.pixel_sample_square();
         
-        let ray_dir = pixel_sample - self.cam;
-        Ray { origin: self.cam, direction: ray_dir }
+        let ray_orig = if self.defocus_angle <= 0.0 { self.cam } else { self.defocus_disk_sample() };
+        let ray_dir = pixel_sample - ray_orig;
+        Ray { origin: ray_orig, direction: ray_dir }
     }
 
     fn pixel_sample_square(&self) -> Array3 {
@@ -129,6 +142,11 @@ impl Camera {
         let pv = -0.5 + random_f64();
 
         self.delta_u * pu + self.delta_v * pv
+    }
+
+    fn defocus_disk_sample(&self) -> Array3 {
+        let p = Array3::random_in_unit_disk();
+        self.cam + (p[0] * self.defocus_disk_u) + (p[1] * self.defocus_disk_v)
     }
 
 }

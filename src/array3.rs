@@ -34,6 +34,15 @@ impl Array3 {
         }
     }
 
+    pub fn random_in_unit_disk() -> Array3 {
+        loop {
+            let p = Array3::new([random_rge_f64(-1.0, 1.0), random_rge_f64(-1.0, 1.0), 0.0]);
+            if p.norm() < 1.0 {
+                return p;
+            }
+        }
+    }
+
     pub fn random_unit() -> Array3 {
         Self::random_in_unit_sphere().unit()
     }
