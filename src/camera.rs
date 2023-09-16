@@ -9,7 +9,6 @@ use crate::util::*;
 pub type Pixel = Array3;
 
 pub struct Camera {
-    aspect_ratio: f64,
     img_width: i32,
     img_height: i32,
     cam: Array3,
@@ -21,29 +20,44 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(aspect_ratio: f64, img_width: i32, samples: i32, max_depth: i32) -> Camera {
+    pub fn new(
+            aspect_ratio: f64,
+            img_width: i32,
+            samples: i32,
+            max_depth: i32,
+            vfov: f64,
+            lookfrom: Array3,
+            lookat: Array3,
+            vup: Array3,
+        ) -> Camera {
         let img_height = (img_width as f64 / aspect_ratio).floor() as i32;
         let img_height = if img_height < 1 { 1 } else { img_height };
 
         //camera
-        let focal_length = 1.0;
-        let viewport_height = 2.0;
+        let focal_length = (lookfrom - lookat).norm();
+        let theta = degrees_to_rad(vfov);
+        let h = (theta/2.0).tan();
+        let viewport_height = 2.0 * h * focal_length;
         let viewport_width = viewport_height * (img_width as f64 / img_height as f64);
-        let cam = Array3::zero();
+        let cam = lookfrom;
+
+        //define basis vectors
+        let w = (lookfrom - lookat).unit();
+        let u = vup.cross(&w).unit();
+        let v = w.cross(&u);
 
         // define viewport vectors
-        let vp_u = Array3::new([viewport_width, 0.0,0.0]);
-        let vp_v = Array3::new([0.0, -viewport_height, 0.0]);
+        let vp_u = viewport_width * u;
+        let vp_v = viewport_height * -v;
 
         // define delta vectors
         let delta_u = vp_u / img_width as f64;
         let delta_v = vp_v / img_height as f64;
         
-        let viewport_upper_left = cam - Array3::new([0.0, 0.0, focal_length]) - vp_u/2.0 - vp_v/2.0;
+        let viewport_upper_left = cam - (focal_length * w) - vp_u/2.0 - vp_v/2.0;
         let pix00_loc = viewport_upper_left + 0.5*(delta_u + delta_v);
 
         Camera { 
-            aspect_ratio,
             img_width,
             img_height,
             cam,
@@ -83,7 +97,7 @@ impl Camera {
     }
 
     fn ray_color(&self, r: &Ray, world: &Vec<Box<dyn Hittable>>, depth: i32) -> Pixel {
-        if depth == 0 { return Array3::zero(); }
+        if depth == 0 { return Pixel::zero(); }
 
         let record = hit_world(world, r, Interval::new(0.001, f64::INFINITY));
 

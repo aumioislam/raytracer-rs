@@ -40,6 +40,11 @@ fn main() -> io::Result<()> {
     let samples_per_pixel = 100;
     let max_depth = 50;
 
-    let cam = Camera::new(aspect_ratio, image_width, samples_per_pixel, max_depth);
+    let vfov = 20.0;
+    let lookfrom = Array3::new([-2.0, 2.0, 1.0]);
+    let lookat = Array3::new([0.0, 0.0, -1.0]);
+    let vup = Array3::new([0.0, 1.0, 0.0]);
+
+    let cam = Camera::new(aspect_ratio, image_width, samples_per_pixel, max_depth, vfov, lookfrom, lookat, vup);
     cam.render(&world)
 }

@@ -33,3 +33,7 @@ pub fn random_f64() -> f64 {
 pub fn random_rge_f64(min: f64, max: f64) -> f64 {
    rand::thread_rng().gen_range(min..max)
 }
+
+pub fn degrees_to_rad(degrees: f64) -> f64 {
+    degrees * std::f64::consts::PI/180.0
+}
