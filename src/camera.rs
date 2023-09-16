@@ -3,6 +3,7 @@ use std::io::{self, Write};
 use crate::array3::Array3;
 use crate::ray::*;
 use crate::interval::*;
+use crate::material::*;
 use crate::util::*;
 
 pub type Pixel = Array3;
@@ -63,8 +64,10 @@ impl Camera {
         for j in 0..self.img_height {
             write!(&mut cerr, "Scanlines remaining: {}\n", self.img_height-j)?;
             cerr.flush()?;
+
             for i in 0..self.img_width {
                 let mut pix = Array3::zero();
+
                 for _ in 0..self.samples {
                     let r = self.get_ray(i, j);
                     pix = pix + self.ray_color(&r, world, self.max_depth);
@@ -85,11 +88,16 @@ impl Camera {
         let record = hit_world(world, r, Interval::new(0.001, f64::INFINITY));
 
         if let Some(hit) = record {
-            let dir = Array3::random_on_hemisphere(&hit.normal);
-            0.5 * self.ray_color(&Ray::new(hit.p, dir), world, depth-1)
+            let pair = hit.mat.scatter(r, &hit);
+            if let Some((attenuation, scattered)) = pair {
+                attenuation * self.ray_color(&scattered, world, depth-1)
+            } else {
+                Pixel::zero()
+            }
         } else {
             let unit_vec = r.direction.unit();
             let a = 0.5*(unit_vec[1] + 1.0);
+
             (1.0-a)*Pixel::new([1.0, 1.0, 1.0]) + a*Pixel::new([0.5, 0.7, 1.0])
         }
     }

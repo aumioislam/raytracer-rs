@@ -1,16 +1,18 @@
 use crate::array3::Array3;
 use crate::ray::*;
 use crate::interval::*;
+use crate::material::*;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub struct Sphere {
     center: Array3,
     radius: f64,
+    material: Material,
 }
 
 impl Sphere {
-    pub fn new(center: Array3, radius: f64) -> Sphere {
-        Sphere{ center, radius }
+    pub fn new(center: Array3, radius: f64, material: Material) -> Sphere {
+        Sphere{ center, radius, material, }
     }
 }
 
@@ -46,7 +48,7 @@ impl Hittable for Sphere {
                 let front_face = r.direction.dot(&normal) < 0.0;
                 let normal = if front_face { normal } else { -normal };
 
-                Some(HitRecord{ p, normal, t, front_face })
+                Some(HitRecord{ p, normal, t, front_face, mat: &self.material })
             } else {
                 None
             }

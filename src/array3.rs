@@ -72,6 +72,14 @@ impl Array3 {
     pub fn unit(&self) -> Array3 {
         *self / self.norm()
     }
+
+    pub fn near_zero(&self) -> bool {
+        self[0].abs() < f64::EPSILON && self[1].abs() < f64::EPSILON && self[2].abs() < f64::EPSILON
+    }
+}
+
+pub fn reflect(vec: &Array3, normal: &Array3) -> Array3 {
+    *vec - 2.0*vec.dot(normal)*(*normal)
 }
 
 impl Index<usize> for Array3 {
