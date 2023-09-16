@@ -15,22 +15,24 @@ use crate::camera::Camera;
 use crate::material::Material;
 use crate::material::Lambertian;
 use crate::material::Metal;
+use crate::material::Dielectric;
 use crate::util::*;
 
 fn main() -> io::Result<()> {
     // materials
     let mat_ground  = Material::Lambertian(Lambertian { albedo: Array3::new([0.8, 0.8, 0.0]) });
-    let mat_center  = Material::Lambertian(Lambertian { albedo: Array3::new([0.7, 0.3, 0.3]) });
-    let mat_left    = Material::Metal(Metal { albedo: Array3::new([0.8, 0.8, 0.8]), fuzz: 0.3 }); 
-    let mat_right   = Material::Metal(Metal { albedo: Array3::new([0.8, 0.6, 0.2]), fuzz: 1.0 });
+    let mat_center  = Material::Lambertian(Lambertian { albedo: Array3::new([0.1, 0.2, 0.5]) });
+    let mat_left    = Material::Dielectric(Dielectric { index_r: 1.5 });
+    let mat_right   = Material::Metal(Metal { albedo: Array3::new([0.8, 0.6, 0.2]), fuzz: 0.0 });
 
     //world
     let mut world: Vec<Box<dyn Hittable>> = Vec::new();
 
-    world.push(Box::new(Sphere::new(Array3::new([0.0, -100.5, -1.0]), 100.0, mat_ground)));
-    world.push(Box::new(Sphere::new(Array3::new([0.0, 0.0, -1.0]), 0.5, mat_center)));
-    world.push(Box::new(Sphere::new(Array3::new([-1.0, 0.0, -1.0]), 0.5, mat_left)));
-    world.push(Box::new(Sphere::new(Array3::new([1.0, 0.0, -1.0]), 0.5, mat_right)));
+    world.push(Box::new(Sphere::new(Array3::new([0.0, -100.5, -1.0]), 100.0, &mat_ground)));
+    world.push(Box::new(Sphere::new(Array3::new([0.0, 0.0, -1.0]), 0.5, &mat_center)));
+    world.push(Box::new(Sphere::new(Array3::new([-1.0, 0.0, -1.0]), 0.5, &mat_left)));
+    world.push(Box::new(Sphere::new(Array3::new([-1.0, 0.0, -1.0]), -0.4,&mat_left)));
+    world.push(Box::new(Sphere::new(Array3::new([1.0, 0.0, -1.0]), 0.5, &mat_right)));
 
     // render
     let aspect_ratio = 16.0/9.0;

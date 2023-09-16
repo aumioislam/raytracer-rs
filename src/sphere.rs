@@ -11,8 +11,8 @@ pub struct Sphere {
 }
 
 impl Sphere {
-    pub fn new(center: Array3, radius: f64, material: Material) -> Sphere {
-        Sphere{ center, radius, material, }
+    pub fn new(center: Array3, radius: f64, material: &Material) -> Sphere {
+        Sphere{ center, radius, material: material.clone(), }
     }
 }
 

@@ -1,5 +1,5 @@
 use std::ops::{Add, Sub, Div, Mul, Neg, Index};
-use std::cmp::PartialEq;
+use std::cmp::{PartialEq, min};
 
 use crate::util::{random_f64, random_rge_f64};
 
@@ -80,6 +80,14 @@ impl Array3 {
 
 pub fn reflect(vec: &Array3, normal: &Array3) -> Array3 {
     *vec - 2.0*vec.dot(normal)*(*normal)
+}
+
+pub fn refract(vec: &Array3, normal: &Array3, eta_ratio: f64) -> Array3 {
+    let dp = normal.dot(&(-(*vec)));
+    let cos_theta = if dp < 1.0 { dp } else { 1.0 };
+    let r_out_perp = eta_ratio * (*vec + cos_theta*(*normal));
+    let r_out_parallel = -((1.0 - r_out_perp.square()).abs().sqrt()) * (*normal);
+    r_out_perp + r_out_parallel
 }
 
 impl Index<usize> for Array3 {
