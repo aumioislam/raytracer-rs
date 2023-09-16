@@ -1,8 +1,8 @@
 use std::io::{self, Write, StdoutLock};
 use rand::Rng;
 
-use crate::array3::*;
-use crate::interval::*;
+use crate::array3::Array3;
+use crate::interval::Interval;
 use crate::camera::Pixel;
 
 pub fn write_pixel(os: &mut StdoutLock, pix: Pixel, samples: i32) -> io::Result<()> {
@@ -20,4 +20,8 @@ pub fn write_pixel(os: &mut StdoutLock, pix: Pixel, samples: i32) -> io::Result<
 
 pub fn random_f64() -> f64 {
    rand::thread_rng().gen_range(0.0..1.0)
+}
+
+pub fn random_rge_f64(min: f64, max: f64) -> f64 {
+   rand::thread_rng().gen_range(min..max)
 }

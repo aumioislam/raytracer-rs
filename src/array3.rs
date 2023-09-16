@@ -1,6 +1,8 @@
 use std::ops::{Add, Sub, Div, Mul, Neg, Index};
 use std::cmp::PartialEq;
 
+use crate::util::{random_f64, random_rge_f64};
+
 #[derive(Debug, Clone, Copy)]
 pub struct Array3 {
     elems: [f64; 3],
@@ -13,6 +15,36 @@ impl Array3 {
 
     pub fn new(elems: [f64; 3]) -> Array3 {
         Array3 { elems }
+    }
+
+    pub fn random() -> Array3 {
+        Array3::new([random_f64(), random_f64(), random_f64()])
+    }
+
+    pub fn random_rge(min: f64, max: f64) -> Array3 {
+        Array3::new([random_rge_f64(min, max), random_rge_f64(min, max), random_rge_f64(min, max)])
+    }
+
+    fn random_in_unit_sphere() -> Array3 {
+        loop {
+            let p = Self::random_rge(-1.0, 1.0);
+            if p.norm() < 1.0 {
+                return p;
+            }
+        }
+    }
+
+    pub fn random_unit() -> Array3 {
+        Self::random_in_unit_sphere().unit()
+    }
+
+    pub fn random_on_hemisphere(normal: &Array3) -> Array3 {
+        let v = Self::random_unit();
+        if v.dot(normal) > 0.0 {
+            v
+        } else {
+            -v
+        }
     }
 
     pub fn dot(&self, rhs: &Array3) -> f64 {

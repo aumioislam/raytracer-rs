@@ -21,6 +21,11 @@ fn main() -> io::Result<()> {
     world.push(Box::new(Sphere::new(Array3::new([0.0, -100.5, -1.0]), 100.0)));
 
     // render
-    let cam = Camera::new(16.0/9.0, 400, 100);
+    let aspect_ratio = 16.0/9.0;
+    let image_width = 400;
+    let samples_per_pixel = 100;
+    let max_depth = 50;
+
+    let cam = Camera::new(aspect_ratio, image_width, samples_per_pixel, max_depth);
     cam.render(&world)
 }

@@ -16,10 +16,11 @@ pub struct Camera {
     delta_u: Array3,
     delta_v: Array3,
     samples: i32,
+    max_depth: i32,
 }
 
 impl Camera {
-    pub fn new(aspect_ratio: f64, img_width: i32, samples: i32) -> Camera {
+    pub fn new(aspect_ratio: f64, img_width: i32, samples: i32, max_depth: i32) -> Camera {
         let img_height = (img_width as f64 / aspect_ratio).floor() as i32;
         let img_height = if img_height < 1 { 1 } else { img_height };
 
@@ -49,6 +50,7 @@ impl Camera {
             delta_u,
             delta_v,
             samples,
+            max_depth,
         }
     }
 
@@ -65,7 +67,7 @@ impl Camera {
                 let mut pix = Array3::zero();
                 for _ in 0..self.samples {
                     let r = self.get_ray(i, j);
-                    pix = pix + self.ray_color(&r, world);
+                    pix = pix + self.ray_color(&r, world, self.max_depth);
                 }
 
                 write_pixel(&mut cout, pix, self.samples)?;
@@ -77,11 +79,14 @@ impl Camera {
         Ok(())
     }
 
-    fn ray_color(&self, r: &Ray, world: &Vec<Box<dyn Hittable>>) -> Pixel {
-        let record = hit_world(world, r, Interval::new(0.0, f64::INFINITY));
+    fn ray_color(&self, r: &Ray, world: &Vec<Box<dyn Hittable>>, depth: i32) -> Pixel {
+        if depth == 0 { return Array3::zero(); }
+
+        let record = hit_world(world, r, Interval::new(0.001, f64::INFINITY));
 
         if let Some(hit) = record {
-            0.5*(hit.normal + Pixel::new([1.0, 1.0, 1.0]))
+            let dir = Array3::random_on_hemisphere(&hit.normal);
+            0.5 * self.ray_color(&Ray::new(hit.p, dir), world, depth-1)
         } else {
             let unit_vec = r.direction.unit();
             let a = 0.5*(unit_vec[1] + 1.0);
